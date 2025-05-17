@@ -36,7 +36,7 @@ else:
 
     globales(program, posicion, programLong)
 
-    AST = parser(False)
+    AST, Error = parser(False)
 
     semantica(AST, True)
 
