@@ -18,21 +18,27 @@ globales(program, posicion, programLong)
 
 #caso de prueba con error
 
-AST = parser(True)
+AST,Error = parser(True)
 
-semantica(AST, True)
+if Error == True:
+    print("Error en el analisis sintactico")
+else:
+    semantica(AST, True)
 
 
-f = open("testoriginal.c-", "r")
-program = f.read()
-programLong = len(program)
-program = program + "$"
-posicion = 0
+    f = open("testoriginal.c-", "r")
+    program = f.read()
+    programLong = len(program)
+    program = program + "$"
+    posicion = 0
 
-#Caso de prueba original
+    #Caso de prueba original
 
-globales(program, posicion, programLong)
+    globales(program, posicion, programLong)
 
-AST = parser(False)
+    AST = parser(False)
 
-semantica(AST, True)
+    semantica(AST, True)
+
+
+    

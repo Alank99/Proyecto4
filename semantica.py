@@ -14,6 +14,8 @@ OPERADORES_LOGICOS = ["==", "!=", "<", "<=", ">", ">="]
 #con el proposito de semantica
 MAIN_EXISTE = False
 
+ERROR = False
+
 #funcion ver si una variable es un array
 def es_array(nodo):
     return nodo.longitud is not None
@@ -186,6 +188,7 @@ def tabla(tree, imprime=True):
 
 #region Postorden
 def recorre_postorden(nodo, tabla, ambito_actual="global"):
+    global ERROR
     #recorremos los nodos en postorden
     if isinstance(nodo, list):
         for subnodo in nodo:
@@ -231,6 +234,7 @@ def recorre_postorden(nodo, tabla, ambito_actual="global"):
         if simbolo is None:
             # Si no existe, imprimir error
             print(f"[Error línea {nodo.lineaAparicion}] Variable '{nodo.nombre}' no declarada.")
+            ERROR = True
         else:
             # Si existe, dejamos que pase
             pass
@@ -249,8 +253,10 @@ def recorre_postorden(nodo, tabla, ambito_actual="global"):
         tipo_func = buscar_funcion(tabla, ambito_actual)
         if nodo.expresion is None and tipo_func != "void":
             print(f"[Error línea {nodo.lineaAparicion}] Se esperaba una expresión en return (tipo {tipo_func}).")
+            ERROR = True
         elif nodo.expresion and tipo_func == "void":
             print(f"[Error línea {nodo.lineaAparicion}] Return no debe tener expresión en función void.")
+            ERROR = True
 
     # Si el nodo es una asignación
     #al poder tener expresiones anidadas
@@ -267,9 +273,11 @@ def recorre_postorden(nodo, tabla, ambito_actual="global"):
         if nodo.condicion:
             tipo_condicion = buscar_tipo_expresion(tabla, ambito_actual, nodo.condicion)
             if tipo_condicion != "int":
+                ERROR = True
                 print(f"[Error línea {nodo.lineaAparicion}] La condición debe ser de tipo 'int', pero se encontró tipo '{tipo_condicion}'.")
             if not buscar_operador_logico(nodo.condicion):
                 print(f"[Error línea {nodo.lineaAparicion}] La condición requiere por lo menos un operador lógico.")
+                ERROR = True
     
     # Si el nodo es una llamada a función
     #se checa que la funcion exista y que el numero de argumentos sea correcto
@@ -288,6 +296,7 @@ def recorre_postorden(nodo, tabla, ambito_actual="global"):
 
         if simbolo is None or simbolo['tipo'] != 'funcion':
             print(f"[Error línea {nodo.lineaAparicion}] Función '{nombre_func}' no declarada.")
+            ERROR = True
             return
 
         # Verificar que el número de argumentos sea correcto
@@ -295,6 +304,7 @@ def recorre_postorden(nodo, tabla, ambito_actual="global"):
         num_argumentos = len(nodo.argumentos)
 
         if num_argumentos != num_parametros:
+            ERROR = True
             print(f"[Error línea {nodo.lineaAparicion}] Función '{nombre_func}' espera {num_parametros} argumentos, pero se proporcionaron {num_argumentos}.")
             return
 
@@ -317,10 +327,12 @@ def recorre_postorden(nodo, tabla, ambito_actual="global"):
 
             # Comparación de tipo
             if tipo_arg != tipo_param:
+                ERROR = True
                 print(f"[Error línea {nodo.lineaAparicion}] Tipo de argumento '{tipo_arg}' no coincide con el tipo esperado '{tipo_param}' en la función '{nombre_func}'.")
 
             # Comparación si es array o no
             if es_array_arg != es_array_param:
+                ERROR = True
                 print(f"[Error línea {nodo.lineaAparicion}] El argumento '{getattr(argumento, 'nombre', 'expresión')}' no coincide con la definición (array vs no-array) en la función '{nombre_func}'.")
 
 #endregion
@@ -368,6 +380,7 @@ def buscar_operador_logico(expresion):
 # Función que busca en los hijos de operadores consecutivos para ver que los hijos cumplan con el tipo de expresión
 # También funciona cuando se les asigna un call de una función
 def buscar_tipo_expresion(tabla, ambito, expresion):
+    global ERROR
     # Si no es un nodo del árbol (por ejemplo, un número constante como 1), se asume int
     if not isinstance(expresion, NodoArbol):
         return "int"
@@ -395,6 +408,7 @@ def buscar_tipo_expresion(tabla, ambito, expresion):
         # Si alguno de los operandos no es int, se reporta error
         if tipo_izq != "int" or tipo_der != "int":
             print(f"[Error línea {expresion.lineaAparicion}] Operación '{expresion.operador}' con operandos no enteros: {tipo_izq}, {tipo_der}")
+            ERROR = True
             # Se retorna el tipo incorrecto para propagar el error
             if tipo_izq == "int":
                 return tipo_der
@@ -416,6 +430,7 @@ def buscar_tipo_expresion(tabla, ambito, expresion):
         # Si el operador no es reconocido, se muestra error
         else:
             print(f"[Error línea {expresion.lineaAparicion}] Operador desconocido '{expresion.operador}'")
+            ERROR = True
             return "error"
 
     # Si el nodo es una llamada a función, se busca su tipo de retorno
@@ -428,6 +443,7 @@ def buscar_tipo_expresion(tabla, ambito, expresion):
             if expresion.nombre == "input" or expresion.nombre == "output":
                 return "int"
             print(f"[Error línea {expresion.lineaAparicion}] Función '{expresion.nombre}' no declarada.")
+            ERROR = True
             return "error"
 
     # Caso por defecto, si no se identificó el tipo, se retorna int
@@ -449,6 +465,8 @@ def semantica(tree, imprime=True):
     print("\n\nAnalizador sematico empezando:")
     recorre_postorden(tree, tabla_resultado)
     print("\n\nterminado:")
+
+
 
     #una vez obtenido la tabla de simbolos, se procede a recorrer el arbol en postorden
 

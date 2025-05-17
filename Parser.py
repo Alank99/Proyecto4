@@ -50,7 +50,9 @@ def sincronizar():
 
 #region Error de sintaxis
 def syntaxError(message):
-    global tokenString, lineno, position, columna
+    global tokenString, lineno, position, columnam,Error
+    Error = True # Se activa la bandera de error
+
     print("Error de sintaxis en la linea " + str(lineno) + ": " + message) 
 
     #imprime la flecha de error
@@ -526,4 +528,4 @@ def parser(imprime= True):
         ArbolImprimir(arbolabstrato)
 
 
-    return arbolabstrato
+    return arbolabstrato, Error
