@@ -16,6 +16,8 @@ MAIN_EXISTE = False
 
 ERROR = False
 
+global tabla_resultado
+
 #funcion ver si una variable es un array
 def es_array(nodo):
     return nodo.longitud is not None
@@ -178,6 +180,7 @@ def tabla(tree, imprime=True):
     #donde la tabla se maneja como un diccionario de ambitos 
     #donde cada ambito tiene una lista de simbolos/variables
     #siendo que cada simbolo es un diccionario con los atributos de las variable
+    global  tabla_resultado 
     tabla_resultado = {}
     recorrer_preorden(tree, tabla_resultado)
     if imprime:
@@ -454,17 +457,27 @@ def buscar_tipo_expresion(tabla, ambito, expresion):
 
 #region funcion principal
 def semantica(tree, imprime=True):
+    global tabla_resultado
     tabla_resultado = {}
     tabla_resultado =  tabla(tree, imprime)
     if not MAIN_EXISTE:
         print("[Error] No se encontró la función 'main' en el programa.")
     #checha que main sea la ultima declaracion de tabla
-    if "main" in tabla_resultado and tabla_resultado["main"][-1]["nombre"] == "main":
-        print("[Error] La función 'main' debe ser la última declaración en el programa.")
+    if len(tabla_resultado["global"]) > 0:
+        if tabla_resultado["global"][-1]["nombre"] != "main":
+            print("[Error] La función 'main' debe ser la última declaración en el ámbito global.")
+            ERROR = True    
+    elif "main" not in tabla_resultado["global"]:
+        print("[Error] No se encontró la función 'main' en el ámbito global.")
+        ERROR = True
+    
     #procesamiento 
     print("\n\nAnalizador sematico empezando:")
     recorre_postorden(tree, tabla_resultado)
     print("\n\nterminado:")
+
+def regresar_tabla():
+    return tabla_resultado
 
 
 

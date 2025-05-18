@@ -2,9 +2,14 @@ from io import TextIOWrapper
 from Parser import *
 from globalTypes import NodoArbol
 from globalTypes import TipoExpresion as Enu_ex
+from semantica import regresar_tabla
 
-
+#region variables globales
 word_size = 4
+offset_variables = {}
+offset = 0
+temp = 0
+
 
 
 # region recorrer
@@ -16,14 +21,18 @@ def recorrer(file: TextIOWrapper, nodo: NodoArbol | list[NodoArbol]):
         file (TextIOWrapper): el archivo
         nodo (NodoArbol | list[NodoArbol]): Una lista de nodos o el nodo como tal 
     '''
-    if nodo is None:
-        return
-
     if isinstance(nodo, list):
         # en caso de que sea una lista porque no existe estandarización aqu
         for sub_nodo in nodo:
             recorrer(file, sub_nodo)
         return
+
+
+
+    if nodo is None:
+        return
+
+
 
     for hijo in (
         nodo.hijoIzquierdo,
@@ -34,8 +43,7 @@ def recorrer(file: TextIOWrapper, nodo: NodoArbol | list[NodoArbol]):
         nodo.sino,
         nodo.condicion
     ):
-        if hijo:
-            recorrer(file,  hijo)
+        recorrer(file,  hijo)
 
     for lista in (
         nodo.parametros,
@@ -46,8 +54,11 @@ def recorrer(file: TextIOWrapper, nodo: NodoArbol | list[NodoArbol]):
             for sub_nodo in lista:
                 recorrer(file, sub_nodo)
 
+
+
     tipoNodo: Enu_ex | None
-    tipoNodo = nodo.tipo
+    tipoNodo = nodo.tipoNodo
+
 
     tipoOperador: str | None = nodo.operador
 
@@ -58,6 +69,7 @@ def recorrer(file: TextIOWrapper, nodo: NodoArbol | list[NodoArbol]):
             match tipoOperador:
                 case "+":
                     for n in suma(file, [nodo.hijoIzquierdo, nodo.hijoDerecho]):
+                        print(n)
                         recorrer(file, n)
 
                 case "-":
@@ -71,7 +83,6 @@ def recorrer(file: TextIOWrapper, nodo: NodoArbol | list[NodoArbol]):
                 case "/":
                     for n in div(file, [nodo.hijoIzquierdo, nodo.hijoDerecho]):
                         recorrer(file, n)
-
         case Enu_ex.Const:
             const(file, nodo.valor)
 
@@ -92,7 +103,6 @@ def recorrer(file: TextIOWrapper, nodo: NodoArbol | list[NodoArbol]):
 
         case Enu_ex.ExpreStmt:
             raise NotImplementedError()
-
         case Enu_ex.Op:
             raise NotImplementedError()
 
@@ -113,6 +123,9 @@ def recorrer(file: TextIOWrapper, nodo: NodoArbol | list[NodoArbol]):
 
 def pasarACódigo(AST: list[NodoArbol], filename: str = 'out.asm') -> None:
     with open(filename, 'x') as f:
+        f.write(f' .text\n')
+        f.write(f' .globl main\n')
+        f.write(f' main:\n')
         recorrer(f, AST)
 
 
