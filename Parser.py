@@ -426,12 +426,12 @@ def declaration():
 #declaration_list -> {declaration}
 def declaration_list():
 
-    listaTokens = [] # Lista de tokens
+    listaArbol = [] # Lista de tokens
     #checka que el token sea un tipo entero o vacio
     while (token == TokenType.INT or token == TokenType.VOID):
         #llama a la funcion declaration
-        listaTokens.append(declaration())
-    return listaTokens # Regresa la lista de tokens
+        listaArbol.append(declaration())
+    return listaArbol # Regresa la lista de tokens
 
 #inicio de la funcion del EBNF de c- siendo iniciado con program
 #donde su gramatica es la siguiente: program -> {declaration}
