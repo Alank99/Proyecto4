@@ -19,11 +19,6 @@ def nueva_etiqueta(tipo: str = "etiqueta"):
     contador_etiquetas += 1
     return etiqueta
 
-def nuevo_temp():
-    global temp
-    temp += 1
-    return f'temp_{temp}'
-
 
 # region recorrer
 def recorrer(file: TextIOWrapper, AST):
