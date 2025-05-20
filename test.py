@@ -5,7 +5,7 @@ from cgen import pasarACódigo
 
 
 
-f = open("testmini6.c-", "r")
+f = open("test1.c-", "r")
 program = f.read()
 programLong = len(program)
 program = program + "$"

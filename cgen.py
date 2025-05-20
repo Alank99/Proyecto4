@@ -50,7 +50,7 @@ def recorrer(file: TextIOWrapper, AST):
                 else:
                     # TODO make local and global
                     # file.write(f'  {fname}_{var['nombre']}: .word 0\n')
-                    file.write(f'  {var['nombre']}: .word 0\n')
+                    file.write(f'  var{var['nombre']}: .word 0\n')
         file.write(f'  \n')
 
     file.write(f'.text\n')
@@ -187,13 +187,11 @@ def generador_expresion(file: TextIOWrapper, nodo: NodoArbol):
                 case "==":
                     for n in igual(file, [nodo.hijoIzquierdo, nodo.hijoDerecho]):
                         generador_expresion(file, n)
-                case "=":
+                case "= ":
                 # aqui se maneja la asignacion
                     var_temp = nodo.hijoIzquierdo.nombre
-                    valor = generador_expresion(file, nodo.hijoDerecho)
-                    offset = variables_globales[var_temp]
-                    if offset is not None:
-                        file.write(f'  sw {valor} {offset}($sp)\n')
+                    generador_expresion(file, nodo.hijoDerecho)
+                    var_write(file, var_temp)
         case Enu_ex.Var:
             var_read(file, nodo.nombre)
         case Enu_ex.Call:
@@ -329,12 +327,12 @@ def const(file: TextIOWrapper, valor):
     file.write(f'  li $a0 {valor}\n\n')
 
 
-def var_write(file: TextIOWrapper, name, value):
-    file.write(f'  ls {name} 0($t0)\n')
+def var_write(file: TextIOWrapper, name):
+    file.write(f'  sw $a0 var{name}\n')
 
 
 def var_read(file: TextIOWrapper, name): 
-    file.write(f'  lw $a0 {name}\n')
+    file.write(f'  lw $a0 var{name}\n')
 
 
 # endregion

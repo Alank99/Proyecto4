@@ -1,0 +1,16 @@
+void main(void)
+{
+    int a; int b; int c;
+    a = input();
+    b = input();
+
+    output(a);
+    output(b);
+
+    c = a + b;
+
+    output(c);
+
+    c = a + b + 7;
+    output(c);
+}
