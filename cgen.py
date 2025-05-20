@@ -129,14 +129,6 @@ def  generador_parteInterna(file: TextIOWrapper, nodo: NodoArbol):
             #es decir la suma, resta, multiplicacion y division
             if(nodo.expresion):
                 generador_expresion(file, nodo.expresion)
-        case Enu_ex.Op:
-            if tipoOperador == "=":
-                #aqui se maneja la asignacion
-                var_temp = nodo.hijoIzquierdo.nombre
-                valor = generador_expresion(file, nodo.hijoDerecho)
-                offset = variables_globales[var_temp]
-                if offset is not None:
-                    file.write(f'  sw {valor} {offset}($sp)\n')
         case Enu_ex.While:
             make_while(file, nodo)
         case Enu_ex.If:
@@ -195,7 +187,13 @@ def generador_expresion(file: TextIOWrapper, nodo: NodoArbol):
                 case "==":
                     for n in igual(file, [nodo.hijoIzquierdo, nodo.hijoDerecho]):
                         generador_expresion(file, n)
-
+                case "=":
+                # aqui se maneja la asignacion
+                    var_temp = nodo.hijoIzquierdo.nombre
+                    valor = generador_expresion(file, nodo.hijoDerecho)
+                    offset = variables_globales[var_temp]
+                    if offset is not None:
+                        file.write(f'  sw {valor} {offset}($sp)\n')
         case Enu_ex.Var:
             var_read(file, nodo.nombre)
         case Enu_ex.Call:
@@ -332,11 +330,11 @@ def const(file: TextIOWrapper, valor):
 
 
 def var_write(file: TextIOWrapper, name, value):
-    file.write(f'  lw {name} 0($t0)\n')
+    file.write(f'  ls {name} 0($t0)\n')
 
 
 def var_read(file: TextIOWrapper, name): 
-    file.write(f'  la $a0 {name}\n')
+    file.write(f'  lw $a0 {name}\n')
 
 
 # endregion

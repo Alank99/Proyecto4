@@ -1,14 +1,21 @@
+# variables
 .data
-  alo: .word 0
+
+  # v - global
+  
+  # v - main
+  a: .word 0
   
 .text
 .globl main
 
 main:
-  la $a0, alo
-  li $v0, 1
+  lw $a0 a
+  # output
+  li $v0 1
   syscall
 
-  li 	$v0, 	10
+  # end call
+  li 	$v0 	10
   syscall
 
