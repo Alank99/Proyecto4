@@ -306,6 +306,7 @@ def getToken(imprime = True):
             if c == "=":
                 estado = Estados.FINALIZADO
                 currentToken = TokenType.IGUAL
+                tokenString = "="
             elif c in Espacios or c.isalpha() or c.isdigit() or c == "$":
                 estado = Estados.FINALIZADO
                 currentToken = TokenType.ASIGNACION
