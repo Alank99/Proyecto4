@@ -34,20 +34,41 @@ def recorrer(file: TextIOWrapper, AST):
     '''
     global variables_globales, offset,temp
 
+    tabla_resultado: dict[str, list[dict[str, str | bool]]]
     tabla_resultado = regresar_tabla()#tabla de simbolos de la semantica a analizar
+
+    file.write(f'# variables\n')
+    file.write(f'.data\n\n')
+
+    # write variable data
+    for fname, funcData in tabla_resultado.items():
+        file.write(f'  # v - {fname}\n')
+        for var in funcData:
+            if var["tipo"] == 'int':
+                if var['array']:
+                    raise NotImplementedError()
+                else:
+                    # TODO make local and global
+                    # file.write(f'  {fname}_{var['nombre']}: .word 0\n')
+                    file.write(f'  {var['nombre']}: .word 0\n')
+        file.write(f'  \n')
+
+    file.write(f'.text\n')
+    file.write(f'.globl main\n\n')
+
 
     for var in tabla_resultado["global"]:
         #A considerar el array a futuro
         if var['tipo'] == "int":
             offset -= word_size
-            variables_globales[var.nombre] = offset
+            variables_globales[var['nombre']] = offset
 
     for nodo in AST:
         if nodo.tipoNodo == Enu_ex.FunDec:# aqui empezamos a definir la funcion osea el collee
             #siendo el caso de una funcion
             generador_callee(file, nodo)
                            
-                
+current_func = None        
 
 #Aqui se maneja la el DecFuncion
 def generador_callee(file: TextIOWrapper, nodo: NodoArbol):
@@ -61,10 +82,10 @@ def generador_callee(file: TextIOWrapper, nodo: NodoArbol):
         nodo (NodoArbol | list[NodoArbol]): Una lista de nodos o el nodo como tal 
     '''
 
-    file.write(f'  {nodo.nombre}:\n')
+    file.write(f'{nodo.nombre}:\n')
     if nodo.nombre != "main":
-        file.write(f'    move $fp $sp\n')
-        file.write(f'    addiu $sp $sp -{word_size}\n')
+        file.write(f'  move\t $fp \t$sp\n')
+        file.write(f'  addiu\t $sp \t$sp \t-{word_size}\n')
 
     if nodo.parteInterna:
         for sub_nodo in nodo.parteInterna.sentencias:
@@ -72,15 +93,16 @@ def generador_callee(file: TextIOWrapper, nodo: NodoArbol):
             generador_parteInterna(file, sub_nodo)
 
     if nodo.nombre == "main":
-        file.write(f'    li $v0 10\n')
-        file.write(f'    syscall\n')
+        file.write(f'  # end call\n')
+        file.write(f'  li \t$v0 \t10\n')
+        file.write(f'  syscall\n\n')
     else:
-        file.write(f'    lw $ra {word_size}($sp)\n')
+        file.write(f'  lw \t$ra \t{word_size}($sp)\n')
         if nodo.parametros:
             longitud = len(nodo.parametros)
-            file.write(f'    addiu $sp $sp {longitud * word_size+8}\n')
-            file.write(f'    lw $fp 0($sp)\n')
-            file.write(f'    jr $ra\n')
+            file.write(f'  addiu \t$sp \t$sp \t{longitud * word_size+8}\n')
+            file.write(f'  lw \t$fp \t0($sp)\n')
+            file.write(f'  jr \t$ra\n')
 
 
 def  generador_parteInterna(file: TextIOWrapper, nodo: NodoArbol):
@@ -175,17 +197,15 @@ def generador_expresion(file: TextIOWrapper, nodo: NodoArbol):
                         generador_expresion(file, n)
 
         case Enu_ex.Var:
-            raise NotImplementedError()
+            var_read(file, nodo.nombre)
         case Enu_ex.Call:
-            raise NotImplementedError()
+            call_function(file, nodo)
 
 
 
 
 def pasarACódigo(AST, filename: str = 'out.asm') -> None:
-    with open(filename, 'x') as f:
-        f.write(f' .text\n')
-        f.write(f' .globl main\n')
+    with open(filename, 'w') as f:
         recorrer(f, AST)
 
 
@@ -195,105 +215,109 @@ def pasarACódigo(AST, filename: str = 'out.asm') -> None:
 
 def suma(file: TextIOWrapper, nodos):
     yield nodos[0]
-    file.write(f'  sw $a0 0($sp)\n')
-    file.write(f'  addiu $sp $sp -{word_size}\n')
+    file.write(f'  # sumar\n')
+    file.write(f'  sw \t$a0 \t0($sp)\n')
+    file.write(f'  addiu \t$sp \t$sp \t-{word_size}\n\n')
 
     yield nodos[1]
-    file.write(f'  lw $t1 {word_size} ($sp)\n')
-    file.write(f'  add $a0 $t1 $a0\n')
-    file.write(f'  addiu $sp $sp {word_size}\n')
+    file.write(f'  # suma - guardar resultado\n')
+    file.write(f'  lw \t$t1 \t{word_size} \t($sp)\n')
+    file.write(f'  add \t$a0 \t$t1 \t$a0\n')
+    file.write(f'  addiu \t$sp \t$sp \t{word_size}\n\n')
 
 
 def resta(file: TextIOWrapper, nodos):
     yield nodos[0]
-    file.write(f'  sw $a0 0($sp)\n')
-    file.write(f'  addiu $sp $sp -{word_size}\n')
+    file.write(f'  # resta\n')
+    file.write(f'  sw \t$a0 \t0($sp)\n')
+    file.write(f'  addiu \t$sp \t$sp \t-{word_size}\n\n')
 
     yield nodos[1]
-    file.write(f'  lw $t1 {word_size} ($sp)\n')
-    file.write(f'  sub $a0 $t1 $a0\n')
-    file.write(f'  addiu $sp $sp {word_size}\n')
+    file.write(f'  # resta - guardar resultado\n')
+    file.write(f'  lw \t$t1 \t{word_size} \t($sp)\n')
+    file.write(f'  sub \t$a0 \t$t1 \t$a0\n')
+    file.write(f'  addiu \t$sp \t$sp \t{word_size}\n\n')
 
 
 def mult(file: TextIOWrapper, nodos):
     yield nodos[0]
-    file.write(f'  sw $a0 0($sp)\n')
-    file.write(f'  addiu $sp $sp -{word_size}\n')
+    file.write(f'  sw \t$a0 \t0($sp)\n')
+    file.write(f'  addiu \t$sp \t$sp \t-{word_size}\n')
 
     yield nodos[1]
-    file.write(f'  lw $t1 {word_size} ($sp)\n')
+    file.write(f'  lw \t$t1 \t{word_size} \t($sp)\n')
     file.write(f'  mul $a0 $t1 $a0\n')
     file.write(f'  addiu $sp $sp {word_size}\n')
 
 
 def div(file: TextIOWrapper, nodos):
     yield nodos[0]
-    file.write(f'  sw $a0 0($sp)\n')
-    file.write(f'  addiu $sp $sp -{word_size}\n')
+    file.write(f'  sw \t$a0 \t0($sp)\n')
+    file.write(f'  addiu \t$sp \t$sp \t-{word_size}\n')
 
     yield nodos[1]
-    file.write(f'  lw $t1 {word_size} ($sp)\n')
-    file.write(f'  div $a0 $t1 $a0\n')
+    file.write(f'  lw \t$t1 \t{word_size} \t($sp)\n')
+    file.write(f'  div \t$a0 \t$t1 \t$a0\n')
     file.write(f'  addiu $sp $sp {word_size}\n')
 
 def menor(file: TextIOWrapper, nodos):
     yield nodos[0]
-    file.write(f'  sw $a0 0($sp)\n')
-    file.write(f'  addiu $sp $sp -{word_size}\n')
+    file.write(f'  sw \t$a0 \t0($sp)\n')
+    file.write(f'  addiu \t$sp \t$sp \t-{word_size}\n')
 
     yield nodos[1]
-    file.write(f'  lw $t1 {word_size} ($sp)\n')
+    file.write(f'  lw \t$t1 \t{word_size} \t($sp)\n')
     file.write(f'  slt $a0 $a0 $t1\n')
     file.write(f'  addiu $sp $sp {word_size}\n')
 
 def mayor(file: TextIOWrapper, nodos):
     yield nodos[0]
-    file.write(f'  sw $a0 0($sp)\n')
-    file.write(f'  addiu $sp $sp -{word_size}\n')
+    file.write(f'  sw \t$a0 \t0($sp)\n')
+    file.write(f'  addiu \t$sp \t$sp \t-{word_size}\n')
 
     yield nodos[1]
-    file.write(f'  lw $t1 {word_size} ($sp)\n')
+    file.write(f'  lw \t$t1 \t{word_size} \t($sp)\n')
     file.write(f'  slt $a0 $ $a0\n')
     file.write(f'  addiu $sp $sp {word_size}\n')
 
 def igual(file: TextIOWrapper, nodos):
     yield nodos[0]
-    file.write(f'  sw $a0 0($sp)\n')
-    file.write(f'  addiu $sp $sp -{word_size}\n')
+    file.write(f'  sw \t$a0 \t0($sp)\n')
+    file.write(f'  addiu \t$sp \t$sp \t-{word_size}\n')
 
     yield nodos[1]
-    file.write(f'  lw $t1 {word_size} ($sp)\n')
+    file.write(f'  lw \t$t1 \t{word_size} \t($sp)\n')
     file.write(f'  seq $a0 $a0 $t1\n')
     file.write(f'  addiu $sp $sp {word_size}\n')
 
 def diferente(file: TextIOWrapper, nodos):
     yield nodos[0]
-    file.write(f'  sw $a0 0($sp)\n')
-    file.write(f'  addiu $sp $sp -{word_size}\n')
+    file.write(f'  sw \t$a0 \t0($sp)\n')
+    file.write(f'  addiu \t$sp \t$sp \t-{word_size}\n')
 
     yield nodos[1]
-    file.write(f'  lw $t1 {word_size} ($sp)\n')
+    file.write(f'  lw \t$t1 \t{word_size} \t($sp)\n')
     file.write(f'  sne $a0 $a0 $t1\n')          
     file.write(f'  addiu $sp $sp {word_size}\n')
 
 def menor_igual(file: TextIOWrapper, nodos):
     yield nodos[0]
-    file.write(f'  sw $a0 0($sp)\n')
-    file.write(f'  addiu $sp $sp -{word_size}\n')
+    file.write(f'  sw \t$a0 \t0($sp)\n')
+    file.write(f'  addiu \t$sp \t$sp \t-{word_size}\n')
 
     yield nodos[1]
-    file.write(f'  lw $t1 {word_size} ($sp)\n')
+    file.write(f'  lw \t$t1 \t{word_size} \t($sp)\n')
     file.write(f'  slt $a0 $t1 $a0\n')
     file.write(f'  xor $a0 $a0 1\n')
     file.write(f'  addiu $sp $sp {word_size}\n')
 
 def mayor_igual(file: TextIOWrapper, nodos):
     yield nodos[0]
-    file.write(f'  sw $a0 0($sp)\n')
-    file.write(f'  addiu $sp $sp -{word_size}\n')
+    file.write(f'  sw \t$a0 \t0($sp)\n')
+    file.write(f'  addiu \t$sp \t$sp \t-{word_size}\n')
 
     yield nodos[1]
-    file.write(f'  lw $t1 {word_size} ($sp)\n')
+    file.write(f'  lw \t$t1 \t{word_size} \t($sp)\n')
     file.write(f'  slt $a0 $a0 $t1\n')
     file.write(f'  xor $a0 $a0 1\n')
     file.write(f'  addiu $sp $sp {word_size}\n')
@@ -303,15 +327,16 @@ def mayor_igual(file: TextIOWrapper, nodos):
 # region cmd var/const/etc
 
 def const(file: TextIOWrapper, valor):
-    file.write(f'  li $a0 {valor}\n')
+    file.write(f'  # constante\n')
+    file.write(f'  li $a0 {valor}\n\n')
 
 
-def var_write(file: TextIOWrapper,):
-    raise NotImplementedError()
+def var_write(file: TextIOWrapper, name, value):
+    file.write(f'  lw {name} 0($t0)\n')
 
 
-def var_read(file: TextIOWrapper,):
-    raise NotImplementedError()
+def var_read(file: TextIOWrapper, name): 
+    file.write(f'  la $a0 {name}\n')
 
 
 # endregion
@@ -319,11 +344,18 @@ def var_read(file: TextIOWrapper,):
 
 
 def read(file: TextIOWrapper, nodos):
-    raise NotImplementedError()
+    file.write(f'  # input\n')
+    file.write(f'  li $v0 5\n')
+    file.write(f'  syscall\n')
+    file.write(f'  move $a0 $v0\n\n')
 
 
 def write(file: TextIOWrapper, nodos):
-    raise NotImplementedError()
+    generador_expresion(file, nodos.argumentos[0])
+
+    file.write(f'  # output\n')
+    file.write(f'  li $v0 1\n')
+    file.write(f'  syscall\n\n')
 
 
 # endregion
@@ -349,7 +381,7 @@ def make_if(file: TextIOWrapper, nodos):
     #aqui se maneja el caso de que la condicion sea falsa
     #por ende se maneja el caso de que la condicion sea verdadera
     file.write(f'  j {nueva_etiquetaFin}\n')
-    file.write(f'  {nueva_etiquetaElse}:\n')
+    file.write(f'{nueva_etiquetaElse}:\n')
     
     if nodos.sino:
         if nodos.sino.tipoNodo == Enu_ex.compoundStmt:
@@ -357,13 +389,13 @@ def make_if(file: TextIOWrapper, nodos):
                 generador_parteInterna(file, sub_nodo)
         else:
             generador_parteInterna(file, nodos.sino)
-    file.write(f'  {nueva_etiquetaFin}:\n')
+    file.write(f'{nueva_etiquetaFin}:\n')
 
 def make_while(file: TextIOWrapper, nodos):
     nueva_etiquetaInicio = nueva_etiqueta("inicio")
     nueva_etiquetaFin = nueva_etiqueta("fin")
 
-    file.write(f'  {nueva_etiquetaInicio}:\n')
+    file.write(f'{nueva_etiquetaInicio}:\n')
     generador_expresion(file, nodos.condicion)
     file.write(f'  beq $a0 $zero {nueva_etiquetaFin}\n')
 
@@ -374,7 +406,7 @@ def make_while(file: TextIOWrapper, nodos):
         else:
             generador_parteInterna(file, nodos.entonces)
     file.write(f'  j {nueva_etiquetaInicio}\n')
-    file.write(f'  {nueva_etiquetaFin}:\n')
+    file.write(f'{nueva_etiquetaFin}:\n')
 
 def make_return(file: TextIOWrapper, nodos):
     if nodos.expresion:
@@ -388,23 +420,19 @@ def make_return(file: TextIOWrapper, nodos):
 
 def call_function(file: TextIOWrapper, nodos):
 
-    if nodos.nombre is "input":
-        file.write(f'  li $v0 5\n')
-        file.write(f'  syscall\n')
-        file.write(f'  move $a0 $v0\n')
+    if nodos.nombre == "input":
+        read(file, nodos)
         return
-    if nodos.nombre is "output":
-        generador_expresion(file, nodos.argumentos[0])
-        file.write(f'  li $v0 1\n')
-        file.write(f'  syscall\n')
+    if nodos.nombre == "output":
+        write(file, nodos)
         return
 
     file.write(f'  sw $fp 0($sp)\n')
-    file.write(f'  addiu $sp $sp -{word_size}\n')
+    file.write(f'  addiu \t$sp \t$sp \t-{word_size}\n')
     for param in nodos.argumentos:
         generador_expresion(file, param)
-        file.write(f'  sw $a0 0($sp)\n')
-        file.write(f'  addiu $sp $sp -{word_size}\n')
+        file.write(f'  sw \t$a0 \t0($sp)\n')
+        file.write(f'  addiu \t$sp \t$sp \t-{word_size}\n')
     file.write(f'  jal {nodos.nombre}\n')
 
 # endregion

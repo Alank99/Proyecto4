@@ -105,6 +105,6 @@ class NodoArbol:
         self.argumentos = [] #argumentos es igual a los argumentos que se le pasan a la funcion
         self.entonces = None #entonces es igual a la sentencia que se va a ejecutar si la expresion es verdadera
         self.parametros = [] #parametros es igual a los parametros que se le pasan a la funcion
-        self.parteInterna = None #parteInterna es igual a la parte interna de la funcion
+        self.parteInterna: NodoArbol | None = None #parteInterna es igual a la parte interna de la funcion
         self.condicion = None #condicion es igual a la condicion que se va a evaluar
         self.lineaAparicion =  0 #lineaAparicion es igual a la linea en la que aparece el nodo

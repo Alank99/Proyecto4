@@ -1,12 +1,14 @@
- .text
- .globl main
-  main:
-  li $a0 1
-  sw $a0 0($sp)
-  addiu $sp $sp -4
-  li $a0 2
-  lw $t1 4 ($sp)
-  add $a0 $t1 $a0
-  addiu $sp $sp 4
-    li $v0 10
-    syscall
+.data
+  alo: .word 0
+  
+.text
+.globl main
+
+main:
+  la $a0, alo
+  li $v0, 1
+  syscall
+
+  li 	$v0, 	10
+  syscall
+
