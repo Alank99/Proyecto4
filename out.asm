@@ -3,6 +3,9 @@
 
   # v - global
   
+  # v - testuwu
+  varb: .word 0
+  
   # v - test
   vara: .word 0
   
@@ -11,13 +14,39 @@
 .text
 .globl main
 
+functestuwu:
+  move	 $fp 	$sp
+  sw $ra 0($sp)
+  addiu	 $sp 	$sp 	-4
+  # start function
+
+  lw $a0 8($sp)
+  # output
+  li $v0 1
+  syscall
+
+  
+  # end function
+  lw $ra 4($sp)
+  addiu $sp $sp 12
+  lw $fp 0($sp)
+  jr $ra
 functest:
   move	 $fp 	$sp
   sw $ra 0($sp)
   addiu	 $sp 	$sp 	-4
   # start function
 
-  lw $a0 vara
+  sw $fp 0($sp)
+  addiu 	$sp 	$sp 	-4
+  # param a
+  lw $a0 8($sp)
+  # save param
+  sw 	$a0 	0($sp)
+  addiu 	$sp 	$sp 	-4
+
+  jal functestuwu
+  lw $a0 8($sp)
   # output
   li $v0 1
   syscall
@@ -40,39 +69,13 @@ main:
   addiu 	$sp 	$sp 	-4
 
   jal functest
-  sw $fp 0($sp)
-  addiu 	$sp 	$sp 	-4
-  # param None
   # constante
   li $a0 2
 
-  # save param
-  sw 	$a0 	0($sp)
-  addiu 	$sp 	$sp 	-4
+  # output
+  li $v0 1
+  syscall
 
-  jal functest
-  sw $fp 0($sp)
-  addiu 	$sp 	$sp 	-4
-  # param None
-  # constante
-  li $a0 3
-
-  # save param
-  sw 	$a0 	0($sp)
-  addiu 	$sp 	$sp 	-4
-
-  jal functest
-  sw $fp 0($sp)
-  addiu 	$sp 	$sp 	-4
-  # param None
-  # constante
-  li $a0 4
-
-  # save param
-  sw 	$a0 	0($sp)
-  addiu 	$sp 	$sp 	-4
-
-  jal functest
   # end call
   li $v0 10
   syscall

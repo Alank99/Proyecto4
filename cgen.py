@@ -91,7 +91,7 @@ def generador_callee(file: TextIOWrapper, nodo: NodoArbol):
 
     if nodo.nombre != "main":
         file.write(f'func{nodo.nombre}:\n')
-        file.write(f'  move\t $fp \t$sp\n')
+        file.write(f'  move $fp $sp\n')
         file.write(f'  sw $ra 0($sp)\n')
         file.write(f'  addiu\t $sp \t$sp \t-{word_size}\n')
         file.write(f'  # start function\n\n')
@@ -367,8 +367,10 @@ def var_write(file: TextIOWrapper, name):
 
 def var_read(file: TextIOWrapper, name):
     if name in currentParams:
-        # TODO leer desde stack con offset (sp)
-        file.write(f'  lw $a0 var{name}\n')
+        index = currentParams.index(name) * 4
+        count = len(currentParams) * 4
+        file.write(f'  lw $a0 {4 + count - index}($sp)\n')
+        return
 
     file.write(f'  lw $a0 var{name}\n')
 

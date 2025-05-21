@@ -1,11 +1,12 @@
-void test(int a){
+void test(int a, int b){
     output(a);
+    output(b);
 }
 
 void main(void)
 {
-    test(1);
-    test(2);
-    test(3);
-    test(4);
+    test(1, 5);
+    test(2, 6);
+    test(3, 7);
+    test(4, 8);
 }

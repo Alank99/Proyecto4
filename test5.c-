@@ -1,17 +1,15 @@
 
-void test2(int b){
+void testuwu(int b){
     output(b);
 }
 
 void test(int a){
-    test2(a);
+    testuwu(a);
     output(a);
 }
 
 void main(void)
 {
     test(1);
-    test(2);
-    test(3);
-    test(4);
+    output(2);
 }
