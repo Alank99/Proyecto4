@@ -35,7 +35,7 @@ funcrecursion:
   syscall
 
   sw $fp 0($sp)
-  addiu $t1 $sp -4
+  addiu $t2 $sp -4
   # param None
   lw $a0 8($sp)
   # sumar
@@ -51,10 +51,10 @@ funcrecursion:
   addiu 	$sp 	$sp 	4
 
   # save param
-  sw $a0 0($t1)
-  addiu $t1 $t1 -4
+  sw $a0 0($t2)
+  addiu $t2 $t2 -4
 
-  move $sp $t1
+  move $sp $t2
   jal funcrecursion
   j fin_1
 
@@ -72,16 +72,16 @@ fin_1:
   jr $ra
 main:
   sw $fp 0($sp)
-  addiu $t1 $sp -4
+  addiu $t2 $sp -4
   # param None
   # constante
   li $a0 0
 
   # save param
-  sw $a0 0($t1)
-  addiu $t1 $t1 -4
+  sw $a0 0($t2)
+  addiu $t2 $t2 -4
 
-  move $sp $t1
+  move $sp $t2
   jal funcrecursion
   # end call
   li $v0 10
