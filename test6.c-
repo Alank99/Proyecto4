@@ -1,0 +1,13 @@
+
+void recursion(int a){
+    if (a < 5){
+        output(a);
+        recursion(a + 1);
+
+    }
+}
+
+void main(void)
+{
+    recursion(0);
+}

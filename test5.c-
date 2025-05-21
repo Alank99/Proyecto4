@@ -1,6 +1,6 @@
 
 void testuwu(int b){
-    output(b);
+    output(b * 2);
 }
 
 void test(int a){
@@ -11,5 +11,9 @@ void test(int a){
 void main(void)
 {
     test(1);
+    test(2);
+    test(3);
+    test(4);
+    test(5);
     output(2);
 }

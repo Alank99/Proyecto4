@@ -459,13 +459,14 @@ def call_function(file: TextIOWrapper, nodos: NodoArbol):
         return
 
     file.write(f'  sw $fp 0($sp)\n')
-    file.write(f'  addiu \t$sp \t$sp \t-{word_size}\n')
+    file.write(f'  addiu $t1 $sp -{word_size}\n')
     for param in nodos.argumentos:
         file.write(f'  # param {param.nombre}\n')
         generador_expresion(file, param)
         file.write(f'  # save param\n')
-        file.write(f'  sw \t$a0 \t0($sp)\n')
-        file.write(f'  addiu \t$sp \t$sp \t-{word_size}\n\n')
+        file.write(f'  sw $a0 0($t1)\n')
+        file.write(f'  addiu $t1 $t1 -{word_size}\n\n')
+    file.write(f'  move $sp $t1\n')
     file.write(f'  jal func{nodos.nombre}\n')
 
 # endregion
