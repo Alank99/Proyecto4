@@ -1,0 +1,11 @@
+void test(int a){
+    output(a);
+}
+
+void main(void)
+{
+    test(1);
+    test(2);
+    test(3);
+    test(4);
+}

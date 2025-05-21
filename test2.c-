@@ -1,0 +1,17 @@
+void main(void)
+{
+    int a; int b; int c;
+    a = input();
+    b = input();
+
+    if (a > b) {
+        output(1);
+    }
+    else {
+        output(0);
+    }
+
+    if (a > b) {
+        output(1);
+    }
+}

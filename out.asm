@@ -3,84 +3,77 @@
 
   # v - global
   
-  # v - main
+  # v - test
   vara: .word 0
-  varb: .word 0
-  varc: .word 0
+  
+  # v - main
   
 .text
 .globl main
 
+functest:
+  move	 $fp 	$sp
+  sw $ra 0($sp)
+  addiu	 $sp 	$sp 	-4
+  # start function
+
+  lw $a0 vara
+  # output
+  li $v0 1
+  syscall
+
+  
+  # end function
+  lw $ra 4($sp)
+  addiu $sp $sp 12
+  lw $fp 0($sp)
+  jr $ra
 main:
-  # input
-  li $v0 5
-  syscall
-  move $a0 $v0
-
-  sw $a0 vara
-  # input
-  li $v0 5
-  syscall
-  move $a0 $v0
-
-  sw $a0 varb
-  lw $a0 vara
-  # output
-  li $v0 1
-  syscall
-
-  lw $a0 varb
-  # output
-  li $v0 1
-  syscall
-
-  lw $a0 vara
-  # sumar
-  sw 	$a0 	0($sp)
+  sw $fp 0($sp)
   addiu 	$sp 	$sp 	-4
-
-  lw $a0 varb
-  # suma - guardar resultado
-  lw 	$t1 	4 	($sp)
-  add 	$a0 	$t1 	$a0
-  addiu 	$sp 	$sp 	4
-
-  sw $a0 varc
-  lw $a0 varc
-  # output
-  li $v0 1
-  syscall
-
-  lw $a0 vara
-  # sumar
-  sw 	$a0 	0($sp)
-  addiu 	$sp 	$sp 	-4
-
-  lw $a0 varb
-  # suma - guardar resultado
-  lw 	$t1 	4 	($sp)
-  add 	$a0 	$t1 	$a0
-  addiu 	$sp 	$sp 	4
-
-  # sumar
-  sw 	$a0 	0($sp)
-  addiu 	$sp 	$sp 	-4
-
+  # param None
   # constante
-  li $a0 7
+  li $a0 1
 
-  # suma - guardar resultado
-  lw 	$t1 	4 	($sp)
-  add 	$a0 	$t1 	$a0
-  addiu 	$sp 	$sp 	4
+  # save param
+  sw 	$a0 	0($sp)
+  addiu 	$sp 	$sp 	-4
 
-  sw $a0 varc
-  lw $a0 varc
-  # output
-  li $v0 1
-  syscall
+  jal functest
+  sw $fp 0($sp)
+  addiu 	$sp 	$sp 	-4
+  # param None
+  # constante
+  li $a0 2
 
+  # save param
+  sw 	$a0 	0($sp)
+  addiu 	$sp 	$sp 	-4
+
+  jal functest
+  sw $fp 0($sp)
+  addiu 	$sp 	$sp 	-4
+  # param None
+  # constante
+  li $a0 3
+
+  # save param
+  sw 	$a0 	0($sp)
+  addiu 	$sp 	$sp 	-4
+
+  jal functest
+  sw $fp 0($sp)
+  addiu 	$sp 	$sp 	-4
+  # param None
+  # constante
+  li $a0 4
+
+  # save param
+  sw 	$a0 	0($sp)
+  addiu 	$sp 	$sp 	-4
+
+  jal functest
   # end call
-  li 	$v0 	10
+  li $v0 10
   syscall
 
