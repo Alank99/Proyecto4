@@ -313,8 +313,9 @@ def statement():
         return expression_stmt()
     else:
         syntaxError("Se esperaba una sentencia, encontrado: " + tokenString)
-        sincronizar()  #avanza
         return None
+
+        
 
 #region compound_stmt
 #Gramatica para la compound_stmt

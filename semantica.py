@@ -457,7 +457,7 @@ def buscar_tipo_expresion(tabla, ambito, expresion):
 
 #region funcion principal
 def semantica(tree, imprime=True):
-    global tabla_resultado
+    global tabla_resultado, ERROR
     tabla_resultado = {}
     tabla_resultado =  tabla(tree, imprime)
     if not MAIN_EXISTE:
@@ -475,6 +475,8 @@ def semantica(tree, imprime=True):
     print("\n\nAnalizador sematico empezando:")
     recorre_postorden(tree, tabla_resultado)
     print("\n\nterminado:")
+
+    return ERROR
 
 def regresar_tabla():
     return tabla_resultado

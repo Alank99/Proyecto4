@@ -12,6 +12,7 @@ temp = 0
 contador_etiquetas = 0
 
 variables_locales = {}  # nombre funcion -> {nombre variable -> offset}
+funcion_actual = None
 
 
 def nueva_etiqueta(tipo: str = "etiqueta"):
@@ -33,7 +34,7 @@ def recorrer(file: TextIOWrapper, AST):
         file (TextIOWrapper): el archivo
         nodo (NodoArbol | list[NodoArbol]): Una lista de nodos o el nodo como tal 
     '''
-    global variables_globales, offset, temp
+    global variables_globales, offset, temp, funcion_actual
 
     tabla_resultado: dict[str, list[dict[str, str | bool]]]
     tabla_resultado = regresar_tabla()  # tabla de simbolos de la semantica a analizar
@@ -41,7 +42,7 @@ def recorrer(file: TextIOWrapper, AST):
     file.write(f'# variables\n')
     file.write(f'.data\n\n')
 
-    # write variable data
+    # Escribe las variables globales y locales
     for fname, funcData in tabla_resultado.items():
         file.write(f'  # v - {fname}\n')
         for var in funcData:
@@ -49,9 +50,11 @@ def recorrer(file: TextIOWrapper, AST):
                 if var['array']:
                     raise NotImplementedError()
                 else:
-                    # TODO make local and global
-                    # file.write(f'  {fname}_{var['nombre']}: .word 0\n')
-                    file.write(f'  var{var['nombre']}: .word 0\n')
+                    if fname == "global":
+                        file.write(f'  var{var['nombre']}: .word 0\n')
+                    else:
+                        file.write(f'  {fname}_var{var['nombre']}: .word 0\n')
+
         file.write(f'  \n')
 
     file.write(f'.text\n')
@@ -65,6 +68,7 @@ def recorrer(file: TextIOWrapper, AST):
 
     for nodo in AST:
         if nodo.tipoNodo == Enu_ex.FunDec:  # aqui empezamos a definir la funcion osea el collee
+            funcion_actual = nodo.nombre
             # siendo el caso de una funcion
             generador_callee(file, nodo)
 
@@ -183,7 +187,6 @@ def generador_expresion(file: TextIOWrapper, nodo: NodoArbol):
     tipoNodo: Enu_ex | None
     tipoNodo = nodo.tipoNodo
     tipoOperador: str | None = nodo.operador
-    print('entre a expresion soy del tipo ', tipoNodo)
     match tipoNodo:
         case None:
             pass
@@ -194,7 +197,6 @@ def generador_expresion(file: TextIOWrapper, nodo: NodoArbol):
             match tipoOperador:
                 case "+":
                     for n in suma(file, [nodo.hijoIzquierdo, nodo.hijoDerecho]):
-                        print(n)
                         generador_expresion(file, n)
 
                 case "-":
@@ -362,18 +364,51 @@ def const(file: TextIOWrapper, valor):
 
 
 def var_write(file: TextIOWrapper, name):
-    file.write(f'  sw $a0 var{name}\n')
+    global funcion_actual
+    tabla_resultado: dict[str, list[dict[str, str | bool]]]
+    tabla_resultado = regresar_tabla()
+    verdadero = False
+    
+    #buscamos el scoope de la variable
+    print(funcion_actual)
+    for simbolo in tabla_resultado[funcion_actual]:
+        if simbolo['nombre'] == name:
+            verdadero = True
+            break
+
+    if verdadero:
+        file.write(f'  sw $a0 {funcion_actual}_var{name}\n')
+    else:
+        file.write(f'  sw $a0 var{name}\n')
+
 
 
 def var_read(file: TextIOWrapper, name):
+    global funcion_actual
+
     if name in currentParams:
         index = currentParams.index(name) * 4
         count = len(currentParams) * 4
         file.write(f'  lw $a0 {4 + count - index}($sp)\n')
         return
+    
+    tabla_resultado: dict[str, list[dict[str, str | bool]]]
+    tabla_resultado = regresar_tabla()
+    verdadero = False
 
-    file.write(f'  lw $a0 var{name}\n')
+    print("lectura", funcion_actual)
+    
+    #buscamos el scoope de la variable
 
+    for simbolo in tabla_resultado[funcion_actual]:
+        if simbolo['nombre'] == name:
+            verdadero = True
+            break
+        
+    if verdadero:
+        file.write(f'  lw $a0 {funcion_actual}_var{name}\n')
+    else:
+        file.write(f'  lw $a0 var{name}\n')
 
 # endregion
 # region cmd sys-call

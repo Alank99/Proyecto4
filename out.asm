@@ -2,87 +2,33 @@
 .data
 
   # v - global
-  
-  # v - recursion
-  vara: .word 0
+  vary: .word 0
   
   # v - main
+  main_varx: .word 0
   
 .text
 .globl main
 
-funcrecursion:
-  move $fp $sp
-  sw $ra 0($sp)
-  addiu	 $sp 	$sp 	-4
-  # start function
-
-  # if statement
-  lw $a0 8($sp)
-  sw $a0 0($sp)
-  addiu $sp $sp -4
+main:
   # constante
-  li $a0 5
+  li $a0 2
 
-  lw $t1 4($sp)
-  slt $a0 $t1 $a0
-  addiu $sp $sp 4
-  beq $a0 $zero else_0
-# if true
-  lw $a0 8($sp)
+  sw $a0 vary
+  # constante
+  li $a0 3
+
+  sw $a0 main_varx
+  lw $a0 vary
   # output
   li $v0 1
   syscall
 
-  sw $fp 0($sp)
-  addiu $t2 $sp -4
-  # param None
-  lw $a0 8($sp)
-  # sumar
-  sw 	$a0 	0($sp)
-  addiu 	$sp 	$sp 	-4
+  lw $a0 main_varx
+  # output
+  li $v0 1
+  syscall
 
-  # constante
-  li $a0 1
-
-  # suma - guardar resultado
-  lw 	$t1 	4($sp)
-  add 	$a0 	$t1 	$a0
-  addiu 	$sp 	$sp 	4
-
-  # save param
-  sw $a0 0($t2)
-  addiu $t2 $t2 -4
-
-  move $sp $t2
-  jal funcrecursion
-  j fin_1
-
-# if false
-else_0:
-  j fin_1
-
-# end if
-fin_1:
-  
-  # end function
-  lw $ra 4($sp)
-  addiu $sp $sp 12
-  lw $fp 0($sp)
-  jr $ra
-main:
-  sw $fp 0($sp)
-  addiu $t2 $sp -4
-  # param None
-  # constante
-  li $a0 0
-
-  # save param
-  sw $a0 0($t2)
-  addiu $t2 $t2 -4
-
-  move $sp $t2
-  jal funcrecursion
   # end call
   li $v0 10
   syscall
