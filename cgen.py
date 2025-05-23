@@ -6,7 +6,6 @@ from semantica import *
 
 # region variables globales
 word_size = 4
-variables_globales = {}
 offset = 0
 temp = 0
 contador_etiquetas = 0
@@ -41,6 +40,7 @@ def recorrer(file: TextIOWrapper, AST):
 
     file.write(f'# variables\n')
     file.write(f'.data\n\n')
+    #longitud = 0
 
     # Escribe las variables globales y locales
     for fname, funcData in tabla_resultado.items():
@@ -49,6 +49,13 @@ def recorrer(file: TextIOWrapper, AST):
             if var["tipo"] == 'int':
                 if var['array']:
                     raise NotImplementedError()
+                #potri te dejo una posible implementacion
+                # if var['array']:
+                #     longitud = var['tamaño'] * word_size
+                #     if fname == "global":
+                #         file.write(f'  var{var['nombre']}: .space {longitud}\n')
+                #     else:
+                #         file.write(f'  {fname}var{var['nombre']}: .space {longitud}\n')
                 else:
                     if fname == "global":
                         file.write(f'  var{var['nombre']}: .word 0\n')
@@ -228,6 +235,7 @@ def generador_expresion(file: TextIOWrapper, nodo: NodoArbol):
                     generador_expresion(file, nodo.hijoDerecho)
                     var_write(file, var_temp)
         case Enu_ex.Var:
+
             var_read(file, nodo.nombre)
         case Enu_ex.Call:
             call_function(file, nodo)
@@ -391,7 +399,27 @@ def var_write(file: TextIOWrapper, name):
 def var_read(file: TextIOWrapper, name):
     global funcion_actual
 
+    # vemos si se busca un array
+    # is_array = False
+    # if nodo.indice:
+    #     is_array = True
+
+
     if name in currentParams:
+        #en caso de que sea un array
+        # if is_array:
+        #hacer las operaciones internas del array
+        #     file.write(f'  lw $a0 {4 + count - index}($sp)\n')
+        #     generador_expresion(file, nodo.indice)
+        #     file.write(f'  mul $a0 $a0 {word_size}\n')
+        #     file.write(f'  add $a0 $a0 {index}\n')
+        #     file.write(f'  lw $a0 {4 + count - index}($sp)\n')
+        #     generador_expresion(file, nodo.indice)
+        #     file.write(f'  mul $a0 $a0 {word_size}\n')
+        #     file.write(f'  add $a0 $a0 {index}\n')
+        #     file.write(f'  lw $a0 {4 + count - index}($sp)\n')
+        #   return
+        #else:aqui va lo de abajo
         index = currentParams.index(name) * 4
         count = len(currentParams) * 4
         file.write(f'  lw $a0 {4 + count - index}($sp)\n')
@@ -399,24 +427,26 @@ def var_read(file: TextIOWrapper, name):
     
     tabla_resultado: dict[str, list[dict[str, str | bool]]]
     tabla_resultado = regresar_tabla()
-    verdadero = False
-
-    print("lectura", funcion_actual)
-    
+    es_local = False    
     #buscamos el scoope de la variable
 
     for simbolo in tabla_resultado[funcion_actual]:
         if simbolo['nombre'] == name:
-            verdadero = True
+            es_local = True
             break
         
-    if verdadero:
-        if funcion_actual == "main":
-            file.write(f'  lw $a0 mvar{name}\n')
-        else:
-            file.write(f'  lw $a0 {funcion_actual}var{name}\n')
-    else:
-        file.write(f'  lw $a0 var{name}\n')
+    etiqueta = f'{funcion_actual}var{name}' if funcion_actual != "main" and es_local else f'mvar{name}' if funcion_actual == "main" and es_local else f'var{name}'
+    #para cuando es una variable en su funcion o global
+    # if is_array:
+    #     file.write(f'  la $t0 {etiqueta}\n')
+    #     generador_expresion(file, nodo.indice)
+    #     file.write(f'  move $t1 $a0  # index\n')
+    #     file.write(f'  mul $t1 $t1 4\n')
+    #     file.write(f'  add $t0 $t0 $t1\n')
+    #     file.write(f'  lw $a0 0($t0)\n')
+    #     else: si fuera una variable normal
+    file.write(f'  # variable {etiqueta}\n')
+
 
 # endregion
 # region cmd sys-call

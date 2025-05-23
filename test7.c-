@@ -1,6 +1,6 @@
 int y;
 
-void test(void){
+void test(int a[]){
     int y;
     y = 1;
     output(y);
@@ -9,15 +9,17 @@ void test(void){
 void main(void)
 {
     int x;
+    int a[10];
 
+    y = a[1+2];
     y = 2;
     x = 3;
 
-    output(y)
-    output(x)
+    output(y);
+    output(x);
 
-    test()
+    test(a);
 
-    output(y)
+    output(y);
     
 }

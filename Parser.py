@@ -40,13 +40,14 @@ def sincronizar():
     global token, tokenString, lineno, columna
     #TokenType de los cuales permiten continuar el analisis
     sincronizadores ={
-        TokenType.INT,TokenType.VOID,TokenType.WHILE,
-        TokenType.RETURN,TokenType.IF,TokenType.ID, TokenType.PUNTO_Y_COMA
+        TokenType.INT,TokenType.VOID,TokenType.RETURN,TokenType.ID, TokenType.PUNTO_Y_COMA
     }
     #mientras el token no sea de los que permiten continuar el analisis
     while token not in sincronizadores and token != TokenType.ENDFILE:
         #se obtiene el siguiente token
         token, tokenString, lineno, columna = getToken(False)
+
+    return
 
 #region Error de sintaxis
 def syntaxError(message):
@@ -54,6 +55,8 @@ def syntaxError(message):
     Error = True # Se activa la bandera de error
 
     print("Error de sintaxis en la linea " + str(lineno) + ": " + message) 
+
+
 
     #imprime la flecha de error
     #Este extracto fue sacado de ChatGPT
@@ -75,8 +78,7 @@ def match(tokenEsperado):
         token, tokenString, lineno, columna = getToken(imprimeScanner) # Se obtiene el siguiente token
     else:
         syntaxError("Token inesperado, esperado: " + tokenEsperado.name + ", encontrado: " + tokenString)
-        #se intenta seguir sincronizando el analizador sintactico
-        sincronizar() # Se llama a la funcion sincronizar
+        return
 #endregion
 
 #region Argumentos
@@ -250,12 +252,14 @@ def expression():
 #Gramatica para la expression-statement
 #expression-statement → [expression] ";"
 def expression_stmt():
-    nodo = nodoNuevo(TipoExpresion.ExpreStmt)
-    
-    if token != TokenType.PUNTO_Y_COMA:
+    if token == TokenType.PUNTO_Y_COMA:
+        match(TokenType.PUNTO_Y_COMA)
+        nodo = nodoNuevo(TipoExpresion.ExpreStmt) # Se crea un nodo de tipo ExpreStmt
+        nodo.expresion = None
+    else:
+        nodo = nodoNuevo(TipoExpresion.ExpreStmt)
         nodo.expresion = expression()
-    
-    match(TokenType.PUNTO_Y_COMA)
+        match(TokenType.PUNTO_Y_COMA)
     return nodo
 
 #Gramatica para la iteration_stmt
@@ -313,7 +317,7 @@ def statement():
         return expression_stmt()
     else:
         syntaxError("Se esperaba una sentencia, encontrado: " + tokenString)
-        return None
+        return 
 
         
 
@@ -405,23 +409,20 @@ def varDeclaration(tipo, nombre):
 #gramatica para la funcion declaration
 #declaration → var-declaration | fun-declaration
 def declaration():
-    #Mandamos error si el token no es un int o un void
-    if token != TokenType.INT and token != TokenType.VOID:
-        syntaxError("Se esperaba un tipo de vacio o entero, encontrado: " + tokenString)
-        return None
-    
-    #Una sabemos que el token es un int o un void
-    tipo = tokenString # Se guarda el tipo de la variable o funcion
-    match(token) # Se espera un token de tipo int o void
-    nombre = tokenString # Se guarda el nombre de la variable o funcion
-    match(TokenType.ID) # Se espera un token de tipo ID
-    #veificamos si es una varDeclaration o una funDeclaration
-    if token == TokenType.PARENTESIS_IZQ:
-        return funDeclaration(tipo, nombre)# Se llama a la funcion funDeclaration
-    elif token == TokenType.PUNTO_Y_COMA or token == TokenType.CORCHETE_IZQ: # Si el token es un punto y coma
-        return varDeclaration(tipo, nombre) # Se llama a la funcion varDeclaration
+    if token in (TokenType.INT, TokenType.VOID): # Si el token es un int o un void
+        tipo = tokenString # Se guarda el tipo
+        match(token) # Se espera un int o un void
+        nombre = tokenString # Se guarda el nombre
+        match(TokenType.ID) # Se espera un ID
+        if token == TokenType.CORCHETE_IZQ or token == TokenType.PUNTO_Y_COMA:
+            return varDeclaration(tipo, nombre) # Se llama a la funcion varDeclaration
+        elif token == TokenType.PARENTESIS_IZQ: # Si el token es un parentesis izquierdo
+            return funDeclaration(tipo, nombre)
+        else:
+            return ErrorSintactico("Se esperaba un parentesis izquierdo o un punto y coma, encontrado: " + tokenString)
     else:
-        syntaxError("Se esperaba un punto y coma o un parentesis izquierdo, encontrado: " + tokenString)
+        syntaxError("Se esperaba un int o un void, encontrado: " + tokenString)
+        return None
 #region declaration_list
 #gramatica de la funcion declaration_list
 #declaration_list -> {declaration}
@@ -429,7 +430,7 @@ def declaration_list():
 
     listaArbol = [] # Lista de tokens
     #checka que el token sea un tipo entero o vacio
-    while (token == TokenType.INT or token == TokenType.VOID):
+    while (token in (TokenType.INT, TokenType.VOID)):
         #llama a la funcion declaration
         listaArbol.append(declaration())
     return listaArbol # Regresa la lista de tokens
