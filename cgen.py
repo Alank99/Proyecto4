@@ -53,7 +53,10 @@ def recorrer(file: TextIOWrapper, AST):
                     if fname == "global":
                         file.write(f'  var{var['nombre']}: .word 0\n')
                     else:
-                        file.write(f'  {fname}_var{var['nombre']}: .word 0\n')
+                        if fname == "main":
+                            file.write(f'  mvar{var['nombre']}: .word 0\n')
+                        else:
+                            file.write(f'  {fname}var{var['nombre']}: .word 0\n')
 
         file.write(f'  \n')
 
@@ -370,14 +373,16 @@ def var_write(file: TextIOWrapper, name):
     verdadero = False
     
     #buscamos el scoope de la variable
-    print(funcion_actual)
     for simbolo in tabla_resultado[funcion_actual]:
         if simbolo['nombre'] == name:
             verdadero = True
             break
 
     if verdadero:
-        file.write(f'  sw $a0 {funcion_actual}_var{name}\n')
+        if funcion_actual == "main":
+            file.write(f'  sw $a0 mvar{name}\n')
+        else:
+            file.write(f'  sw $a0 {funcion_actual}var{name}\n')
     else:
         file.write(f'  sw $a0 var{name}\n')
 
@@ -406,7 +411,10 @@ def var_read(file: TextIOWrapper, name):
             break
         
     if verdadero:
-        file.write(f'  lw $a0 {funcion_actual}_var{name}\n')
+        if funcion_actual == "main":
+            file.write(f'  lw $a0 mvar{name}\n')
+        else:
+            file.write(f'  lw $a0 {funcion_actual}var{name}\n')
     else:
         file.write(f'  lw $a0 var{name}\n')
 

@@ -1,5 +1,11 @@
 int y;
 
+void test(void){
+    int y;
+    y = 1;
+    output(y);
+}
+
 void main(void)
 {
     int x;
@@ -10,5 +16,8 @@ void main(void)
     output(y)
     output(x)
 
+    test()
+
+    output(y)
     
 }
