@@ -47,23 +47,24 @@ def recorrer(file: TextIOWrapper, AST):
         file.write(f'  # v - {fname}\n')
         for var in funcData:
             if var["tipo"] == 'int':
-                if var['array']:
-                    raise NotImplementedError()
-                #potri te dejo una posible implementacion
-                # if var['array']:
-                #     longitud = var['tamaño'] * word_size
-                #     if fname == "global":
-                #         file.write(f'  var{var['nombre']}: .space {longitud}\n')
-                #     else:
-                #         file.write(f'  {fname}var{var['nombre']}: .space {longitud}\n')
-                else:
-                    if fname == "global":
-                        file.write(f'  var{var['nombre']}: .word 0\n')
-                    else:
+                if var["tipo"] == 'int':
+                    if var['array']:
+                        longitud = int(var['tamaño']) * word_size
+                        if fname == "global":
+                            file.write(f'  var{var["nombre"]}: .space {longitud}\n')
                         if fname == "main":
-                            file.write(f'  mvar{var['nombre']}: .word 0\n')
+                            file.write(f'  mvar{var["nombre"]}: .space {longitud}\n')
                         else:
-                            file.write(f'  {fname}var{var['nombre']}: .word 0\n')
+                            file.write(f'  {fname}var{var["nombre"]}: .space {longitud}\n')
+                        
+                    else:
+                        if fname == "global":
+                            file.write(f'  var{var["nombre"]}: .word 0\n')
+                        else:
+                            if fname == "main":
+                                file.write(f'  mvar{var["nombre"]}: .word 0\n')
+                            else:
+                                file.write(f'  {fname}var{var["nombre"]}: .word 0\n')
 
         file.write(f'  \n')
 
@@ -231,12 +232,12 @@ def generador_expresion(file: TextIOWrapper, nodo: NodoArbol):
                         generador_expresion(file, n)
                 case "= ":
                     # aqui se maneja la asignacion
-                    var_temp = nodo.hijoIzquierdo.nombre
+                    var_temp = nodo.hijoIzquierdo
                     generador_expresion(file, nodo.hijoDerecho)
                     var_write(file, var_temp)
         case Enu_ex.Var:
 
-            var_read(file, nodo.nombre)
+            var_read(file, nodo)
         case Enu_ex.Call:
             call_function(file, nodo)
 
@@ -374,60 +375,63 @@ def const(file: TextIOWrapper, valor):
     file.write(f'  li $a0 {valor}\n\n')
 
 
-def var_write(file: TextIOWrapper, name):
+def var_write(file: TextIOWrapper, nodo: NodoArbol):
     global funcion_actual
-    tabla_resultado: dict[str, list[dict[str, str | bool]]]
     tabla_resultado = regresar_tabla()
-    verdadero = False
-    
-    #buscamos el scoope de la variable
+    es_local = False
+    es_array = nodo.indice is not None
+
+    # Buscar el símbolo
     for simbolo in tabla_resultado[funcion_actual]:
-        if simbolo['nombre'] == name:
-            verdadero = True
+        if simbolo['nombre'] == nodo.nombre:
+            es_local = True
             break
 
-    etiqueta = f'{funcion_actual}var{name}' if funcion_actual != "main" and verdadero else f'mvar{name}' if funcion_actual == "main" and verdadero else f'var{name}'
+    etiqueta = (
+        f'{funcion_actual}var{nodo.nombre}' if funcion_actual != "main" and es_local else
+        f'mvar{nodo.nombre}' if funcion_actual == "main" and es_local else
+        f'var{nodo.nombre}'
+    )
 
-    
-
-    if verdadero:
-        if funcion_actual == "main":
-            file.write(f'  sw $a0 mvar{name}\n')
-        else:
-            file.write(f'  sw $a0 {funcion_actual}var{name}\n')
+    if es_array:
+        file.write(f'  la $t0 {etiqueta}\n')                   # base address
+        generador_expresion(file, nodo.indice)                # calcula el índice, resultado en $a0
+        file.write(f'  mul $t1 $a0 {word_size}\n')            # t1 = index * 4
+        file.write(f'  add $t0 $t0 $t1\n')                    # dirección final
+        file.write(f'  sw $a1 0($t0)  # escribe en array\n')   # suponiendo que el valor a escribir está en $a1
     else:
-        file.write(f'  sw $a0 var{name}\n')
+        file.write(f'  sw $a0 {etiqueta}\n') 
 
 
 
-def var_read(file: TextIOWrapper, name):
+def var_read(file: TextIOWrapper, nodo: NodoArbol):
     global funcion_actual
 
     # vemos si se busca un array
-    # is_array = False
-    # if nodo.indice:
-    #     is_array = True
+    is_array = False
+    if nodo.indice:
+         is_array = True
 
 
-    if name in currentParams:
+    if nodo.nombre in currentParams:
         #en caso de que sea un array
-        # if is_array:
+        if is_array:
         #hacer las operaciones internas del array
-        #     file.write(f'  lw $a0 {4 + count - index}($sp)\n')
-        #     generador_expresion(file, nodo.indice)
-        #     file.write(f'  mul $a0 $a0 {word_size}\n')
-        #     file.write(f'  add $a0 $a0 {index}\n')
-        #     file.write(f'  lw $a0 {4 + count - index}($sp)\n')
-        #     generador_expresion(file, nodo.indice)
-        #     file.write(f'  mul $a0 $a0 {word_size}\n')
-        #     file.write(f'  add $a0 $a0 {index}\n')
-        #     file.write(f'  lw $a0 {4 + count - index}($sp)\n')
-        #   return
-        #else:aqui va lo de abajo
-        index = currentParams.index(name) * 4
-        count = len(currentParams) * 4
-        file.write(f'  lw $a0 {4 + count - index}($sp)\n')
-        return
+             file.write(f'  lw $a0 {4 + count - index}($sp)\n')
+             generador_expresion(file, nodo.indice)
+             file.write(f'  mul $a0 $a0 {word_size}\n')
+             file.write(f'  add $a0 $a0 {index}\n')
+             file.write(f'  lw $a0 {4 + count - index}($sp)\n')
+             generador_expresion(file, nodo.indice)
+             file.write(f'  mul $a0 $a0 {word_size}\n')
+             file.write(f'  add $a0 $a0 {index}\n')
+             file.write(f'  lw $a0 {4 + count - index}($sp)\n')
+             return
+        else:
+            index = currentParams.index(nodo.nombre) * 4
+            count = len(currentParams) * 4
+            file.write(f'  lw $a0 {4 + count - index}($sp)\n')
+            return
     
     tabla_resultado: dict[str, list[dict[str, str | bool]]]
     tabla_resultado = regresar_tabla()
@@ -435,22 +439,22 @@ def var_read(file: TextIOWrapper, name):
     #buscamos el scoope de la variable
 
     for simbolo in tabla_resultado[funcion_actual]:
-        if simbolo['nombre'] == name:
+        if simbolo['nombre'] == nodo.nombre:
             es_local = True
             break
-        
-    etiqueta = f'{funcion_actual}var{name}' if funcion_actual != "main" and es_local else f'mvar{name}' if funcion_actual == "main" and es_local else f'var{name}'
+
+    etiqueta = f'{funcion_actual}var{nodo.nombre}' if funcion_actual != "main" and es_local else f'mvar{nodo.nombre}' if funcion_actual == "main" and es_local else f'var{nodo.nombre}'
     #para cuando es una variable en su funcion o global
-    # if is_array:
-    #     file.write(f'  la $t0 {etiqueta}\n')
-    #     generador_expresion(file, nodo.indice)
-    #     file.write(f'  move $t1 $a0  # index\n')
-    #     file.write(f'  mul $t1 $t1 4\n')
-    #     file.write(f'  add $t0 $t0 $t1\n')
-    #     file.write(f'  lw $a0 0($t0)\n')
-    #     else: si fuera una variable normal
-    file.write(f'  # variable {etiqueta}\n')
-    file.write(f'  lw $a0 {etiqueta}\n')
+    if is_array:
+         file.write(f'  la $t0 {etiqueta}\n')
+         generador_expresion(file, nodo.indice)
+         file.write(f'  move $t1 $a0  # index\n')
+         file.write(f'  mul $t1 $t1 4\n')
+         file.write(f'  add $t0 $t0 $t1\n')
+         file.write(f'  lw $a0 0($t0)\n')
+    else: # si fuera una variable normal
+        file.write(f'  # variable {etiqueta}\n')
+        file.write(f'  lw $a0 {etiqueta}\n')
 
 
 # endregion

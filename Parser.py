@@ -45,6 +45,7 @@ def sincronizar():
     #mientras el token no sea de los que permiten continuar el analisis
     while token not in sincronizadores and token != TokenType.ENDFILE:
         #se obtiene el siguiente token
+        
         token, tokenString, lineno, columna = getToken(False)
 
     return
@@ -55,6 +56,7 @@ def syntaxError(message):
     Error = True # Se activa la bandera de error
 
     print("Error de sintaxis en la linea " + str(lineno) + ": " + message) 
+    return
 
 
 
