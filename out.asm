@@ -3,108 +3,88 @@
 
   # v - global
   
-  # v - recursion
-  recursionvara: .word 0
-  recursionvarb: .word 0
+  # v - test
   
   # v - main
-  mvara: .word 0
+  mvary: .word 0
   
 .text
 .globl main
 
-funcrecursion:
+functest:
   move $fp $sp
   sw $ra 0($sp)
   addiu	 $sp 	$sp 	-4
   # start function
 
+  addiu $sp $sp -40
   # constante
-  li $a0 9
+  li $a0 4
 
-  sw $a0 recursionvarb
-  # variable recursionvarb
-  lw $a0 recursionvarb
-  # output
-  li $v0 1
-  syscall
-
-  # if statement
-  lw $a0 8($sp)
-  sw $a0 0($sp)
-  addiu $sp $sp -4
-  # constante
-  li $a0 5
-
-  lw $t1 4($sp)
-  slt $a0 $t1 $a0
-  addiu $sp $sp 4
-  beq $a0 $zero else_0
-# if true
-  lw $a0 8($sp)
-  # output
-  li $v0 1
-  syscall
-
-  sw $fp 0($sp)
-  addiu $t2 $sp -4
-  # param None
-  lw $a0 8($sp)
-  # sumar
-  sw 	$a0 	0($sp)
-  addiu 	$sp 	$sp 	-4
-
+  #Escritura arreglo testvarc
+  # indice
   # constante
   li $a0 1
 
-  # suma - guardar resultado
-  lw 	$t1 	4($sp)
-  add 	$a0 	$t1 	$a0
-  addiu 	$sp 	$sp 	4
-
-  # save param
+  move $t1 $a0
+  mul $t1 $t1 4
+  addiu $t0 $fp -40
+  add $t2 $t0 $t1
   sw $a0 0($t2)
-  addiu $t2 $t2 -4
+  # indice
+  # constante
+  li $a0 1
 
-  move $sp $t2
-  jal funcrecursion
-  j fin_1
+  move $t1 $a0
+  mul $t1 $t1 4
+  addiu $t0 $fp -40
+  add $t2 $t0 $t1
+  lw $a0 0($t2)
+  # output
+  li $v0 1
+  syscall
 
-# if false
-else_0:
-  j fin_1
-
-# end if
-fin_1:
   
   # end function
   lw $ra 4($sp)
-  addiu $sp $sp 12
+  addiu $sp $sp 48
   lw $fp 0($sp)
   jr $ra
 main:
+  addiu $sp $sp -40
   # constante
-  li $a0 2
+  li $a0 10
 
-  sw $a0 mvara
-  sw $fp 0($sp)
-  addiu $t2 $sp -4
-  # param a
-  # variable mvara
-  lw $a0 mvara
-  # save param
-  sw $a0 0($t2)
-  addiu $t2 $t2 -4
-
-  move $sp $t2
-  jal funcrecursion
+  #Escritura arreglo mvara
+  # indice
   # constante
   li $a0 1
 
+  move $t1 $a0
+  mul $t1 $t1 4
+  addiu $t0 $fp -40
+  add $t2 $t0 $t1
+  sw $a0 0($t2)
+  # indice
+  # constante
+  li $a0 1
+
+  move $t1 $a0
+  mul $t1 $t1 4
+  addiu $t0 $fp -40
+  add $t2 $t0 $t1
+  lw $a0 0($t2)
+  # variable mvary
+  sw $a0 mvary
+  lw $a0 mvary
   # output
   li $v0 1
   syscall
 
+  sw $fp 0($sp)
+  addiu $t2 $sp -4
+  move $sp $t2
+  jal functest
   # end call
   li $v0 10
   syscall
