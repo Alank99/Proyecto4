@@ -386,6 +386,10 @@ def var_write(file: TextIOWrapper, name):
             verdadero = True
             break
 
+    etiqueta = f'{funcion_actual}var{name}' if funcion_actual != "main" and verdadero else f'mvar{name}' if funcion_actual == "main" and verdadero else f'var{name}'
+
+    
+
     if verdadero:
         if funcion_actual == "main":
             file.write(f'  sw $a0 mvar{name}\n')
@@ -446,6 +450,7 @@ def var_read(file: TextIOWrapper, name):
     #     file.write(f'  lw $a0 0($t0)\n')
     #     else: si fuera una variable normal
     file.write(f'  # variable {etiqueta}\n')
+    file.write(f'  lw $a0 {etiqueta}\n')
 
 
 # endregion

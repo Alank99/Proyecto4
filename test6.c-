@@ -1,5 +1,8 @@
 
 void recursion(int a){
+    int b;
+    b = 9;
+    output(b);
     if (a < 5){
         output(a);
         recursion(a + 1);
@@ -9,5 +12,9 @@ void recursion(int a){
 
 void main(void)
 {
-    recursion(0);
+    int a;
+    a = 2;
+    recursion(a);
+
+    output(1);
 }
