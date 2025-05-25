@@ -232,9 +232,13 @@ def generador_expresion(file: TextIOWrapper, nodo: NodoArbol):
                         generador_expresion(file, n)
                 case "= ":
                     # aqui se maneja la asignacion
-                    var_temp = nodo.hijoIzquierdo
-                    generador_expresion(file, nodo.hijoDerecho)
-                    var_write(file, var_temp)
+                    if nodo.hijoIzquierdo.indice:
+                        for n in var_write_array(file, [nodo.hijoIzquierdo.indice, nodo.hijoDerecho], nodo.hijoIzquierdo.nombre):
+                            generador_expresion(file, n)
+                    else:
+                        var_temp = nodo.hijoIzquierdo
+                        generador_expresion(file, nodo.hijoDerecho)
+                        var_write(file, var_temp)
         case Enu_ex.Var:
 
             var_read(file, nodo)
@@ -375,11 +379,38 @@ def const(file: TextIOWrapper, valor):
     file.write(f'  li $a0 {valor}\n\n')
 
 
+def var_write_array(file: TextIOWrapper, nodos, name):
+    global funcion_actual
+    tabla_resultado = regresar_tabla()
+
+    # Buscar el símbolo
+    for simbolo in tabla_resultado[funcion_actual]:
+        if simbolo['nombre'] == name:
+            es_local = True
+            break
+
+    etiqueta = (
+        f'{funcion_actual}var{name}' if funcion_actual != "main" and es_local else
+        f'mvar{name}' if funcion_actual == "main" and es_local else
+        f'var{name}'
+    )
+
+    #primero conseguimos el indice
+    file.write(f'  # conseguimos el indice \n')  
+    yield nodos[0]
+    file.write(f'  # buscamos el lugar en el array\n')
+    file.write(f'  mul $t0 $a0 4\n')  # multiplicamos el indice por 4
+    #conseguimos el nuevo valor de la variable
+
+    file.write(f'  # guardamos el valor en la variable\n')
+    yield nodos[1]
+    file.write(f'  sw $a0 {etiqueta}($t0)\n')  # guardamos el valor en la variable
+    file.write(f'  # fin variable array {etiqueta}\n')
+
+
 def var_write(file: TextIOWrapper, nodo: NodoArbol):
     global funcion_actual
     tabla_resultado = regresar_tabla()
-    es_local = False
-    es_array = nodo.indice is not None
 
     # Buscar el símbolo
     for simbolo in tabla_resultado[funcion_actual]:
@@ -393,14 +424,7 @@ def var_write(file: TextIOWrapper, nodo: NodoArbol):
         f'var{nodo.nombre}'
     )
 
-    if es_array:
-        file.write(f'  la $t0 {etiqueta}\n')                   # base address
-        generador_expresion(file, nodo.indice)                # calcula el índice, resultado en $a0
-        file.write(f'  mul $t1 $a0 {word_size}\n')            # t1 = index * 4
-        file.write(f'  add $t0 $t0 $t1\n')                    # dirección final
-        file.write(f'  sw $a1 0($t0)  # escribe en array\n')   # suponiendo que el valor a escribir está en $a1
-    else:
-        file.write(f'  sw $a0 {etiqueta}\n') 
+    file.write(f'  sw $a0 {etiqueta}\n') 
 
 
 
@@ -446,12 +470,9 @@ def var_read(file: TextIOWrapper, nodo: NodoArbol):
     etiqueta = f'{funcion_actual}var{nodo.nombre}' if funcion_actual != "main" and es_local else f'mvar{nodo.nombre}' if funcion_actual == "main" and es_local else f'var{nodo.nombre}'
     #para cuando es una variable en su funcion o global
     if is_array:
-         file.write(f'  la $t0 {etiqueta}\n')
-         generador_expresion(file, nodo.indice)
-         file.write(f'  move $t1 $a0  # index\n')
-         file.write(f'  mul $t1 $t1 4\n')
-         file.write(f'  add $t0 $t0 $t1\n')
-         file.write(f'  lw $a0 0($t0)\n')
+        generador_expresion(file, nodo.indice)
+        file.write(f'  mul $t0, $a0, 4\n')      # índice * 4
+        file.write(f'  lw $a0, {etiqueta}($t0)\n')  # acceso tipo arreglo(nombre) como en imagen
     else: # si fuera una variable normal
         file.write(f'  # variable {etiqueta}\n')
         file.write(f'  lw $a0 {etiqueta}\n')
