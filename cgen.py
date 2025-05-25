@@ -407,7 +407,7 @@ def var_write_array(file: TextIOWrapper, nodos, name):
     file.write(f'  sw $a0 {etiqueta}($t0)\n')  # guardamos el valor en la variable
     file.write(f'  # fin variable array {etiqueta}\n')
 
-
+#codigo de inspiracion https://profile.iiita.ac.in/bibhas.ghoshal/COA_2020/Lab/Array_MIPS.pdf
 def var_write(file: TextIOWrapper, nodo: NodoArbol):
     global funcion_actual
     tabla_resultado = regresar_tabla()
