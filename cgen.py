@@ -3,6 +3,12 @@ from Parser import *
 from globalTypes import NodoArbol
 from globalTypes import TipoExpresion as Enu_ex
 from semantica import *
+"""
+Generador de código MIPS para C-
+Creado por Alan Hernández y Alejandro Fernández
+Fecha de entrega: 29 de mayo de 2025
+
+"""
 
 # region variables globales
 word_size = 4
@@ -24,10 +30,9 @@ def nueva_etiqueta(tipo: str = "etiqueta"):
 # region recorrer
 def recorrer(file: TextIOWrapper, AST):
     '''
-    recorrer Recorre todo el AST para generar código UwU
-
-    Potri si ves esto, Hice un cambio a la forma de generar el código, para asi tener un mejor control de los nodos
-    Siendo que el AST lo manejamos como una lista, pero por cada elemento de la lista, es una función
+    recorrer Recorre todo el AST para generar código 
+    ademas de generar las variables globales y locales
+    busca por funciones y las genera
 
     Args:
         file (TextIOWrapper): el archivo
@@ -92,10 +97,9 @@ currentParams = []
 
 def generador_callee(file: TextIOWrapper, nodo: NodoArbol):
     '''
-    Potri Aqui se maneja la el DecFuncion
-    de la forma de que el profesor nos dijo que lo hiciéramos
-    Solo manejor el main diferente debido a que es la primera funcion
-    por ende no tiene un control link
+    manejo de la generacion de la funcion de los callee y generacion internas de cada parte de la funcion
+    y se administran los parametros de la funcion
+    ademas de que se maneja el main como una funcion especial
     Args:
         file (TextIOWrapper): el archivo
         nodo (NodoArbol | list[NodoArbol]): Una lista de nodos o el nodo como tal 
@@ -186,11 +190,11 @@ def generador_parteInterna(file: TextIOWrapper, nodo: NodoArbol):
 
 def generador_expresion(file: TextIOWrapper, nodo: NodoArbol):
     '''
-    Potri Aqui se maneja la expresion
+   Aqui se maneja la expresion
     siendo la suma, resta, multiplicacion y division
     operadores logicos
     y el coller/call de la funcion
-    siendo aqui que si podemos manejar el yield
+    donde lo hijos u operadores anidados se maneja con yield para un manejo mas eficiente y lectura del codigo sencilla
      Args:
         file (TextIOWrapper): el archivo
         nodo (NodoArbol | list[NodoArbol]): Una lista de nodos o el nodo como tal 
@@ -502,7 +506,7 @@ def write(file: TextIOWrapper, nodos):
 
 def make_if(file: TextIOWrapper, nodos: list[NodoArbol]):
 
-    # por ende ya preprocesa todo antes
+    # generacion de etiquetas
     nueva_etiquetaElse = nueva_etiqueta("else")
     nueva_etiquetaFin = nueva_etiqueta("fin")
 

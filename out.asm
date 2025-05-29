@@ -139,7 +139,31 @@ main:
   syscall
 
   # constante
-  li $a0 2
+  li $a0 5
+
+  # sumar
+  sw 	$a0 	0($sp)
+  addiu 	$sp 	$sp 	-4
+
+  # constante
+  li $a0 4
+
+  # suma - guardar resultado
+  lw 	$t1 	4($sp)
+  add 	$a0 	$t1 	$a0
+  addiu 	$sp 	$sp 	4
+
+  # resta
+  sw 	$a0 	0($sp)
+  addiu 	$sp 	$sp 	-4
+
+  # constante
+  li $a0 3
+
+  # resta - guardar resultado
+  lw 	$t1 	4($sp)
+  sub 	$a0 	$t1 	$a0
+  addiu 	$sp 	$sp 	4
 
   sw $a0 mvary
   # variable mvary
@@ -148,10 +172,6 @@ main:
   li $v0 1
   syscall
 
-  sw $fp 0($sp)
-  addiu $t2 $sp -4
-  move $sp $t2
-  jal functest
   # end call
   li $v0 10
   syscall
